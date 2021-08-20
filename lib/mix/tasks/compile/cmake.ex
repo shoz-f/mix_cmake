@@ -64,13 +64,14 @@ defmodule Mix.Tasks.Compile.Cmake do
   def run(_argv) do
     cmake_config = Cmake.get_config()
     build_dir  = cmake_config[:build_dir]
+    install_prefix = cmake_config[:install_prefix]
 
     cmake_env = Cmake.default_env()
 
     cond do
       !Cmake.build(build_dir, cmake_config[:build_opts], cmake_env) ->
         :error
-      !Cmake.install(build_dir, cmake_config[:install_opts], cmake_env) ->
+      !Cmake.install(build_dir, install_prefix, cmake_config[:install_opts], cmake_env) ->
         :error
       true -> :ok
     end
