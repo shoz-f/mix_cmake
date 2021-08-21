@@ -4,11 +4,12 @@ defmodule Mix.Tasks.Cmake do
   defmodule Config do
     use Mix.Task
 
-    def run(argv) do
-      cmake_config = Cmake.get_config()
-
-      with {:ok, opts, dirs, cmake_opts} = Cmake.parse_argv(argv, strict: [verbose: :boolean])
+    def run(argv \\ []) do
+      with\
+        {:ok, opts, dirs, cmake_args} <- Cmake.parse_argv(argv, strict: [verbose: :boolean])
       do
+        cmake_config = Cmake.get_config()
+
         [build_dir, source_dir] = case dirs do
           [build, source] -> [build, source]
           [build]         -> [build, cmake_config[:source_dir]]
@@ -17,11 +18,9 @@ defmodule Mix.Tasks.Cmake do
         end
 
         cmake_env = Cmake.default_env()
-        cmake_env = if Keyword.has_key?(cmake_config, :generator),
-                      do: Map.put(cmake_env, "CMAKE_GENERATOR", cmake_config[:generator]),
-                      else: cmake_env
+          |> Cmake.add_env("CMAKE_GENERATOR", cmake_config[:generator])
 
-        Cmake.config(build_dir, source_dir, cmake_opts, cmake_env)
+        Cmake.config(build_dir, source_dir, cmake_args, cmake_env)
       end
     end
   end
@@ -29,11 +28,35 @@ defmodule Mix.Tasks.Cmake do
   defmodule Build do
     use Mix.Task
 
-    def run(argv) do
-      cmake_config = Cmake.get_config()
-
-      with {:ok, opts, dirs, cmake_opts} = Cmake.parse_argv(argv, strict: [verbose: :boolean])
+    def run(argv \\ []) do
+      with\
+        {:ok, opts, dirs, cmake_args} <- Cmake.parse_argv(argv, strict: [verbose: :boolean])
       do
+        cmake_config = Cmake.get_config()
+
+        [build_dir] = case dirs do
+          [build] -> [build]
+          []      -> [cmake_config[:build_dir]]
+          _ -> exit("illegal arguments")
+        end
+
+        cmake_env = Cmake.default_env()
+          |> Cmake.add_env("CMAKE_BUILD_PARALLEL_LEVEL", cmake_config[:build_parallel_level])
+
+        Cmake.build(build_dir, cmake_args, cmake_env)
+      end
+    end
+  end
+  
+  defmodule Install do
+    use Mix.Task
+    
+    def run(argv \\ []) do
+      with\
+        {:ok, opts, dirs, cmake_args} <- Cmake.parse_argv(argv, strict: [verbose: :boolean])
+      do
+        cmake_config = Cmake.get_config()
+
         [build_dir] = case dirs do
           [build] -> [build]
           []      -> [cmake_config[:build_dir]]
@@ -42,29 +65,7 @@ defmodule Mix.Tasks.Cmake do
 
         cmake_env = Cmake.default_env()
 
-        Cmake.build(build_dir, cmake_opts, cmake_env)
-      end
-    end
-  end
-  
-  defmodule Install do
-    use Mix.Task
-    
-    def run(argv) do
-      cmake_config = Cmake.get_config()
-
-      with {:ok, opts, dirs, cmake_opts} = Cmake.parse_argv(argv, strict: [verbose: :boolean])
-      do
-        [build_dir, install_prefix] = case dirs do
-          [build, install] -> [build, install]
-          [build]          -> [build, cmake_config[:install_prefix]]
-          []               -> [cmake_config[:build_dir], cmake_config[:install_prefix]]
-          _ -> exit("illegal arguments")
-        end
-
-        cmake_env = Cmake.default_env()
-
-        Cmake.install(build_dir, install_prefix, cmake_opts, cmake_env)
+        Cmake.install(build_dir, cmake_args, cmake_env)
       end
     end
   end
@@ -72,30 +73,15 @@ defmodule Mix.Tasks.Cmake do
   defmodule All do
     use Mix.Task
 
-    def run(argv) do
-      cmake_config = Cmake.get_config()
-
-      with {:ok, opts, dirs, cmake_opts} = Cmake.parse_argv(argv, strict: [verbose: :boolean])
-      do
-        [build_dir, source_dir] = case dirs do
-          [build, source] -> [build, source]
-          [build]         -> [build, cmake_config[:source_dir]]
-          []              -> [cmake_config[:build_dir], cmake_config[:source_dir]]
-          _ -> exit("illegal arguments")
-        end
-
-        cmake_env = Cmake.default_env()
-        cmake_env = if Keyword.has_key?(cmake_config, :generator),
-                      do: Map.put(cmake_env, "CMAKE_GENERATOR", cmake_config[:generator]),
-                      else: cmake_env
-
-        Cmake.config(build_dir, source_dir, cmake_opts, cmake_env)
-      end
+    def run(_argv) do
+      Config.run()
+      Build.run()
+      Install.run()
     end
   end
 
 
-  def config(build_dir, source_dir, opts \\ [], env \\ %{}) do
+  def config(build_dir, source_dir, args \\ [], env \\ %{}) do
     # convert dir name to absolute path
     build_path  = build_path(build_dir)
     source_path = Path.expand(source_dir)
@@ -104,30 +90,16 @@ defmodule Mix.Tasks.Cmake do
     File.mkdir_p(build_path)
 
     # construct cmake args
-    opts = if build_dir == :global,
-      do:   ["-UCMAKE_HOME_DIRECTORY", "-UCONFU_DEPENDENCIES_SOURCE_DIR" | opts], # add options to remove some cache entries
-      else: opts
+    args = if build_dir == :global,
+      do:   ["-UCMAKE_HOME_DIRECTORY", "-UCONFU_DEPENDENCIES_SOURCE_DIR" | args], # add options to remove some cache entries
+      else: args
 
     # invoke cmake
-    cmake(build_path, opts ++ [source_path], env)
+    cmake(build_path, args ++ [source_path], env)
   end
 
-  def build(build_dir, opts \\ [], env \\ %{}) do
-    # convert dir name to absolute path
-    build_path  = build_path(build_dir)
-
-    # invoke cmake
-    cmake(build_path, ["--build", "."] ++ opts, env)
-  end
-
-  def install(build_dir, install_prefix, opts \\ [], env \\ %{}) do
-    # convert dir name to absolute path
-    build_path  = build_path(build_dir)
-    prefix     = Path.expand(install_prefix)
-
-    # invoke cmake
-    cmake(build_path, ["--install", ".", "--prefix", prefix] ++ opts, env)
-  end
+  def build(build_dir, args \\ [], env \\ %{}),   do: cmake(build_path(build_dir), ["--build", "."] ++ args, env)
+  def install(build_dir, args \\ [], env \\ %{}), do: cmake(build_path(build_dir), ["--install", "."] ++ args, env)
 
   defp cmake(build_path, args, env) do
     opts = [
@@ -137,8 +109,8 @@ defmodule Mix.Tasks.Cmake do
       stderr_to_stdout: true
     ]
 
-    #IO.inspect([args: args, opts: opts])
-    IO.inspect(args)
+    IO.inspect([args: args, opts: opts])
+    #IO.inspect(args)
     {%IO.Stream{}, status} = System.cmd("cmake", args, opts)
     (status == 0)
   end
@@ -164,10 +136,8 @@ defmodule Mix.Tasks.Cmake do
     Keyword.get(Mix.Project.config(), :cmake, [])
     |> Keyword.put_new(:build_dir, :priv)
     |> Keyword.put_new(:source_dir, File.cwd!)
-    |> Keyword.put_new(:install_prefix, File.cwd!)
     |> Keyword.put_new(:config_opts, [])
     |> Keyword.put_new(:build_opts, [])
-    |> Keyword.put_new(:install_opts, [])
   end
 
 
@@ -208,6 +178,11 @@ defmodule Mix.Tasks.Cmake do
     System.get_env(var) || default
   end
 
+  def add_env(env, _name, nil),                  do: env
+  def add_env(env, name, i) when is_integer(i), do: Map.put(env, name, Integer.to_string(i))
+  def add_env(env, name, f) when is_float(f),   do: Map.put(env, name, Float.to_string(f))
+  def add_env(env, name, a) when is_atom(a),    do: Map.put(env, name, Atom.to_string(a))
+  def add_env(env, name, s),                     do: Map.put(env, name, s)
 
   @doc """
   parse command line arguments.
