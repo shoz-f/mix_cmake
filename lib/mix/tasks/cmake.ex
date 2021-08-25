@@ -5,6 +5,10 @@ defmodule Mix.Tasks.Cmake do
     use Mix.Task
     import Mix.Generator
     
+    @moduledoc """
+    """
+    @shortdoc "Create CMakeLists.txt"
+    
     def run(_argv) do
       assigns = [
         app_name: Cmake.app_name()
@@ -50,6 +54,10 @@ defmodule Mix.Tasks.Cmake do
   defmodule Config do
     use Mix.Task
 
+    @moduledoc """
+    """
+    @shortdoc "Generate build scripts create based on the CMakeLists.txt"
+    
     def run(argv \\ []) do
       with\
         {:ok, opts, dirs, cmake_args} <- Cmake.parse_argv(argv, strict: [verbose: :boolean])
@@ -74,6 +82,10 @@ defmodule Mix.Tasks.Cmake do
   defmodule Build do
     use Mix.Task
 
+    @moduledoc """
+    """
+    @shortdoc "Build the CMake application"
+    
     def run(argv \\ []) do
       with\
         {:ok, opts, dirs, cmake_args} <- Cmake.parse_argv(argv, strict: [verbose: :boolean])
@@ -96,6 +108,10 @@ defmodule Mix.Tasks.Cmake do
   
   defmodule Install do
     use Mix.Task
+    
+    @moduledoc """
+    """
+    @shortdoc "Install the application to the project's priv"
     
     def run(argv \\ []) do
       with\
@@ -156,8 +172,8 @@ defmodule Mix.Tasks.Cmake do
       stderr_to_stdout: true
     ]
 
-    IO.inspect([args: args, opts: opts])
-    #IO.inspect(args)
+#    IO.inspect([args: args, opts: opts])
+
     {%IO.Stream{}, status} = System.cmd("cmake", args, opts)
     (status == 0)
   end
