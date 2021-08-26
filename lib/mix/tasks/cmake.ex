@@ -5,16 +5,23 @@ defmodule Mix.Tasks.Cmake do
     use Mix.Task
     import Mix.Generator
     
+    @shortdoc "Create CMakeLists.txt"
     @moduledoc """
     """
-    @shortdoc "Create CMakeLists.txt"
-    
-    def run(_argv) do
+
+    def run(args) do
+      cmake_config = Cmake.get_config()
+
+      [source_dir] = case args do
+        [source] -> [source]
+        []       -> [cmake_config[:source_dir]]
+        _ -> exit("illegal arguments")
+      end
+
       assigns = [
         app_name: Cmake.app_name()
       ]
-    
-      create_file("CMakeLists.txt", cmakelists_template(assigns))
+      create_file(Path.join(source_dir, "CMakeLists.txt"), cmakelists_template(assigns))
     end
     
     embed_template(:cmakelists, """
@@ -54,13 +61,24 @@ defmodule Mix.Tasks.Cmake do
   defmodule Config do
     use Mix.Task
 
+    @shortdoc "Generate build scripts based on the CMakeLists.txt"
     @moduledoc """
+    Generate build scripts based on the 'CMakeLists.txt'.
+    
+      mix cmake.config [build_dir] [source_dir] [++ CMake options]
+    
+    ## Command line options
+    
+    ## Configuration
+
+    * `:build_dir` - 
+    * `:source_dir` -
+    * `:generator` -
     """
-    @shortdoc "Generate build scripts create based on the CMakeLists.txt"
     
     def run(argv \\ []) do
       with\
-        {:ok, opts, dirs, cmake_args} <- Cmake.parse_argv(argv, strict: [verbose: :boolean])
+        {:ok, _opts, dirs, cmake_args} <- Cmake.parse_argv(argv, strict: [verbose: :boolean])
       do
         cmake_config = Cmake.get_config()
 
@@ -82,13 +100,23 @@ defmodule Mix.Tasks.Cmake do
   defmodule Build do
     use Mix.Task
 
-    @moduledoc """
-    """
     @shortdoc "Build the CMake application"
+    @moduledoc """
+    Build the CMake application.
+    
+      mix cmake.build [build_dir] [++ CMake options]
+    
+    ## Command line options
+    
+    ## Configuration
+
+    * `:build_dir` - 
+    * `:build_parallel_level` -
+    """
     
     def run(argv \\ []) do
       with\
-        {:ok, opts, dirs, cmake_args} <- Cmake.parse_argv(argv, strict: [verbose: :boolean])
+        {:ok, _opts, dirs, cmake_args} <- Cmake.parse_argv(argv, strict: [verbose: :boolean])
       do
         cmake_config = Cmake.get_config()
 
@@ -109,13 +137,22 @@ defmodule Mix.Tasks.Cmake do
   defmodule Install do
     use Mix.Task
     
-    @moduledoc """
-    """
     @shortdoc "Install the application to the project's priv"
+    @moduledoc """
+    Install the application to the project's priv.
+    
+      mix cmake.install [build_dir]
+    
+    ## Command line options
+    
+    ## Configuration
+
+    * `:build_dir` - 
+    """
     
     def run(argv \\ []) do
       with\
-        {:ok, opts, dirs, cmake_args} <- Cmake.parse_argv(argv, strict: [verbose: :boolean])
+        {:ok, _opts, dirs, cmake_args} <- Cmake.parse_argv(argv, strict: [verbose: :boolean])
       do
         cmake_config = Cmake.get_config()
 
@@ -135,8 +172,24 @@ defmodule Mix.Tasks.Cmake do
   defmodule All do
     use Mix.Task
 
-    def run(_argv) do
-      Config.run()
+    @shortdoc "Generate CMake buiid scripts and then build/install the application"
+    @moduledoc """
+    Generate CMake buiid scripts and then build/install the application.
+    
+      mix cmake.all
+    
+    ## Command line options
+    
+    ## Configuration
+
+    * `:build_dir` -
+    * `:source_dir` - specify project directory.
+    * `:generator` -
+    * `:build_parallel_level` -
+    """
+
+    def run(argv) do
+      Mix.Task.run("cmake.config", argv)
       Build.run()
       Install.run()
     end
