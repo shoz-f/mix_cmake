@@ -1,197 +1,31 @@
 defmodule Mix.Tasks.Cmake do
+  use Mix.Task
   alias Mix.Tasks.Cmake
 
-  defmodule Init do
-    use Mix.Task
-    import Mix.Generator
-    
-    @shortdoc "Create CMakeLists.txt"
-    @moduledoc """
-    """
-
-    def run(args) do
-      cmake_config = Cmake.get_config()
-
-      [source_dir] = case args do
-        [source] -> [source]
-        []       -> [cmake_config[:source_dir]]
-        _ -> exit("illegal arguments")
-      end
-
-      assigns = [
-        app_name: Cmake.app_name()
-      ]
-      create_file(Path.join(source_dir, "CMakeLists.txt"), cmakelists_template(assigns))
-    end
-    
-    embed_template(:cmakelists, """
-    #
-    # Copyright 2020 The TensorFlow Authors. All Rights Reserved.
-    #
-    # Licensed under the Apache License, Version 2.0 (the "License");
-    # you may not use this file except in compliance with the License.
-    # You may obtain a copy of the License at
-    #
-    #      https://www.apache.org/licenses/LICENSE-2.0
-    #
-    # Unless required by applicable law or agreed to in writing, software
-    # distributed under the License is distributed on an "AS IS" BASIS,
-    # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-    # See the License for the specific language governing permissions and
-    # limitations under the License.
-    
-    cmake_minimum_required(VERSION 3.18)
-    project(<%= @app_name %> CXX)
-    
-    
-    # main
-    add_executable(<%= @app_name %>
-      src/<%= @app_name %>.cc
-    )
-    target_link_libraries(<%= @app_name %>
-    )
-    
-    install(TARGETS <%= @app_name %>
-      RUNTIME
-      DESTINATION ${CMAKE_SOURCE_DIR}/priv
-    )
-    """)
-  end
-
-  defmodule Config do
-    use Mix.Task
-
-    @shortdoc "Generate build scripts based on the CMakeLists.txt"
-    @moduledoc """
-    Generate build scripts based on the 'CMakeLists.txt'.
-    
-      mix cmake.config [build_dir] [source_dir] [++ CMake options]
-    
-    ## Command line options
-    
-    ## Configuration
-
-    * `:build_dir` - 
-    * `:source_dir` -
-    * `:generator` -
-    """
-    
-    def run(argv \\ []) do
-      with\
-        {:ok, _opts, dirs, cmake_args} <- Cmake.parse_argv(argv, strict: [verbose: :boolean])
-      do
-        cmake_config = Cmake.get_config()
-
-        [build_dir, source_dir] = case dirs do
-          [build, source] -> [build, source]
-          [build]         -> [build, cmake_config[:source_dir]]
-          []              -> [cmake_config[:build_dir], cmake_config[:source_dir]]
-          _ -> exit("illegal arguments")
-        end
-
-        cmake_env = Cmake.default_env()
-          |> Cmake.add_env("CMAKE_GENERATOR", cmake_config[:generator])
-
-        Cmake.config(build_dir, source_dir, cmake_args, cmake_env)
-      end
-    end
-  end
-
-  defmodule Build do
-    use Mix.Task
-
-    @shortdoc "Build the CMake application"
-    @moduledoc """
-    Build the CMake application.
-    
-      mix cmake.build [build_dir] [++ CMake options]
-    
-    ## Command line options
-    
-    ## Configuration
-
-    * `:build_dir` - 
-    * `:build_parallel_level` -
-    """
-    
-    def run(argv \\ []) do
-      with\
-        {:ok, _opts, dirs, cmake_args} <- Cmake.parse_argv(argv, strict: [verbose: :boolean])
-      do
-        cmake_config = Cmake.get_config()
-
-        [build_dir] = case dirs do
-          [build] -> [build]
-          []      -> [cmake_config[:build_dir]]
-          _ -> exit("illegal arguments")
-        end
-
-        cmake_env = Cmake.default_env()
-          |> Cmake.add_env("CMAKE_BUILD_PARALLEL_LEVEL", cmake_config[:build_parallel_level])
-
-        Cmake.build(build_dir, cmake_args, cmake_env)
-      end
-    end
-  end
+  @shortdoc "Generate CMake buiid scripts and then build/install the application"
+  @moduledoc """
+  Generate CMake buiid scripts and then build/install the application.
   
-  defmodule Install do
-    use Mix.Task
-    
-    @shortdoc "Install the application to the project's priv"
-    @moduledoc """
-    Install the application to the project's priv.
-    
-      mix cmake.install [build_dir]
-    
-    ## Command line options
-    
-    ## Configuration
-
-    * `:build_dir` - 
-    """
-    
-    def run(argv \\ []) do
-      with\
-        {:ok, _opts, dirs, cmake_args} <- Cmake.parse_argv(argv, strict: [verbose: :boolean])
-      do
-        cmake_config = Cmake.get_config()
-
-        [build_dir] = case dirs do
-          [build] -> [build]
-          []      -> [cmake_config[:build_dir]]
-          _ -> exit("illegal arguments")
-        end
-
-        cmake_env = Cmake.default_env()
-
-        Cmake.install(build_dir, cmake_args, cmake_env)
-      end
-    end
-  end
+    mix cmake.all
   
-  defmodule All do
-    use Mix.Task
+  ## Command line options
+  
+  ## Configuration
 
-    @shortdoc "Generate CMake buiid scripts and then build/install the application"
-    @moduledoc """
-    Generate CMake buiid scripts and then build/install the application.
-    
-      mix cmake.all
-    
-    ## Command line options
-    
-    ## Configuration
+  * `:build_dir` -
+  * `:source_dir` - specify project directory.
+  * `:generator` -
+  * `:build_parallel_level` -
+  """
 
-    * `:build_dir` -
-    * `:source_dir` - specify project directory.
-    * `:generator` -
-    * `:build_parallel_level` -
-    """
+  def run(argv) do
+    with\
+      {:ok, opts, _dirs, _cmake_args} <- Cmake.parse_argv(argv, strict: [config: :boolean])
+    do
+      if opts[:config], do: Mix.Task.run("cmake.config", argv)
 
-    def run(argv) do
-      Mix.Task.run("cmake.config", argv)
-      Build.run()
-      Install.run()
+      Mix.Task.run("cmake.build", argv)
+      Mix.Task.run("cmake.install", argv)
     end
   end
 
@@ -231,28 +65,26 @@ defmodule Mix.Tasks.Cmake do
     (status == 0)
   end
 
-  def app_name() do
-    Mix.Project.config[:app]
-    |> Atom.to_string()
-  end
-
   defp build_path(:local) do
     Mix.Project.build_path()
-    |> Path.join("cmake")
+    |> Path.join(".cmake_build")
   end
 
   defp build_path(:global) do
-    app_name = app_name()
-
     System.user_home
     |> Path.absname()
-    |> Path.join(".#{app_name}")
+    |> Path.join(".#{app_name()}")
   end
 
   defp build_path(dir), do: Path.expand(dir)
 
+  @doc "get application name"
+  def app_name(), do: Atom.to_string(Mix.Project.config[:app])
+
+  @doc "get :cmake configuration from Mix.exs"
   def get_config() do
     Keyword.get(Mix.Project.config(), :cmake, [])
+    # default setting if it has no configuration
     |> Keyword.put_new(:build_dir, :priv)
     |> Keyword.put_new(:source_dir, File.cwd!)
     |> Keyword.put_new(:config_opts, [])
