@@ -8,10 +8,10 @@ defmodule Mix.Tasks.Cmake.Init do
   @moduledoc """
   """
 
-  def run(args) do
+  def run(argv) do
     cmake_config = Cmake.get_config()
 
-    [source_dir] = case args do
+    [source_dir] = case argv do
       [source] -> [source]
       []       -> [cmake_config[:source_dir]]
       _ -> exit("illegal arguments")

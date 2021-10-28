@@ -18,7 +18,7 @@ defmodule  Mix.Tasks.Cmake.Config do
   * `:generator` -
   """
   
-  def run(argv \\ []) do
+  def run(argv) do
     with\
       {:ok, _opts, dirs, cmake_args} <- Cmake.parse_argv(argv, strict: [verbose: :boolean])
     do

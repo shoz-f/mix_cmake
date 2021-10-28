@@ -2,6 +2,26 @@ defmodule Mix.Tasks.Cmake do
   use Mix.Task
   alias Mix.Tasks.Cmake
 
+  defmodule Debug do
+    use Mix.Task
+    def run(argv) do
+      IO.inspect(argv)
+      IO.inspect(Enum.join(argv, " "))
+    end
+  end
+
+  defmacro conj_back(list, val, form) do
+    quote do
+      if unquote(val), do: unquote(list) ++ unquote(form), else: unquote(list)
+    end
+  end
+  
+  defmacro conj_front(list, val, form) do
+    quote do
+      if unquote(val), do: unquote(list) ++ unquote(form), else: unquote(list)
+    end
+  end
+
   @shortdoc "Generate CMake buiid scripts and then build/install the application"
   @moduledoc """
   Generate CMake buiid scripts and then build/install the application.
@@ -9,6 +29,7 @@ defmodule Mix.Tasks.Cmake do
     mix cmake.all
   
   ## Command line options
+  * `--config` - generate build script
   
   ## Configuration
 
@@ -18,9 +39,13 @@ defmodule Mix.Tasks.Cmake do
   * `:build_parallel_level` -
   """
 
+  @switches [
+    config: :boolean
+  ]
+
   def run(argv) do
     with\
-      {:ok, opts, _dirs, _cmake_args} <- Cmake.parse_argv(argv, strict: [config: :boolean])
+      {:ok, opts, _dirs, _cmake_args} <- Cmake.parse_argv(argv, strict: @switches)
     do
       if opts[:config], do: Mix.Task.run("cmake.config", argv)
 
@@ -59,7 +84,7 @@ defmodule Mix.Tasks.Cmake do
       stderr_to_stdout: true
     ]
 
-#    IO.inspect([args: args, opts: opts])
+    IO.inspect([args: args, opts: opts])
 
     {%IO.Stream{}, status} = System.cmd("cmake", args, opts)
     (status == 0)
@@ -154,8 +179,8 @@ defmodule Mix.Tasks.Cmake do
         do_parse(rest, config, [{option, value}|Keyword.delete(opts, option)], args)
       {:invalid, key, value, _rest} ->
         {:invalid, key, value}
-      {:undefined, key, _value, _rest} ->
-        {:undefined, key}
+      {:undefined, _key, _value, rest} ->
+        do_parse(rest, config, opts, args)
       {:error, [<<":",atom::binary>>|rest]} -> # atom formed
         do_parse(rest, config, opts, [String.to_atom(atom)|args])
       {:error, [arg|rest]} ->

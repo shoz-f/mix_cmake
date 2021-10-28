@@ -1,6 +1,7 @@
 defmodule Mix.Tasks.Cmake.Build do
   use Mix.Task
 
+  require Mix.Tasks.Cmake
   alias Mix.Tasks.Cmake
 
   @shortdoc "Build the CMake application"
@@ -16,10 +17,15 @@ defmodule Mix.Tasks.Cmake.Build do
   * `:build_dir` - 
   * `:build_parallel_level` -
   """
-  
-  def run(argv \\ []) do
+
+  @switches [
+    parallel: :integer,
+    target:   :string,
+  ]
+
+  def run(argv) do
     with\
-      {:ok, _opts, dirs, cmake_args} <- Cmake.parse_argv(argv, strict: [verbose: :boolean])
+      {:ok, opts, dirs, cmake_args} <- Cmake.parse_argv(argv, strict: @switches)
     do
       cmake_config = Cmake.get_config()
 
@@ -28,6 +34,10 @@ defmodule Mix.Tasks.Cmake.Build do
         []      -> [cmake_config[:build_dir]]
         _ -> exit("illegal arguments")
       end
+
+      cmake_args = cmake_args
+        |> Cmake.conj_front(opts[:parallel], ["--parallel", "#{opts[:parallel]}"])
+        |> Cmake.conj_front(opts[:target], ["--target", "#{opts[:target]}"])
 
       cmake_env = Cmake.default_env()
         |> Cmake.add_env("CMAKE_BUILD_PARALLEL_LEVEL", cmake_config[:build_parallel_level])

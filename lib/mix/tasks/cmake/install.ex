@@ -16,7 +16,11 @@ defmodule Mix.Tasks.Cmake.Install do
   * `:build_dir` - 
   """
   
-  def run(argv \\ []) do
+  @switches [
+    strip: :boolean
+  ]
+
+  def run(argv) do
     with\
       {:ok, _opts, dirs, cmake_args} <- Cmake.parse_argv(argv, strict: [verbose: :boolean])
     do
