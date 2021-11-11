@@ -1,8 +1,8 @@
 defmodule Mix.Tasks.Cmake.Build do
   use Mix.Task
 
-  require Mix.Tasks.Cmake
   alias Mix.Tasks.Cmake
+  require Cmake
 
   @shortdoc "Build the CMake application"
   @moduledoc """
@@ -21,6 +21,7 @@ defmodule Mix.Tasks.Cmake.Build do
   @switches [
     parallel: :integer,
     target:   :string,
+    verbose:  :boolean
   ]
 
   def run(argv) do
@@ -41,6 +42,7 @@ defmodule Mix.Tasks.Cmake.Build do
 
       cmake_env = Cmake.default_env()
         |> Cmake.add_env("CMAKE_BUILD_PARALLEL_LEVEL", cmake_config[:build_parallel_level])
+        |> Cmake.add_env("VERBOSE", opts[:verbose])
 
       Cmake.build(build_dir, cmake_args, cmake_env)
     end

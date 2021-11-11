@@ -2,23 +2,9 @@ defmodule Mix.Tasks.Cmake do
   use Mix.Task
   alias Mix.Tasks.Cmake
 
-  defmodule Debug do
-    use Mix.Task
-    def run(argv) do
-      IO.inspect(argv)
-      IO.inspect(Enum.join(argv, " "))
-    end
-  end
-
-  defmacro conj_back(list, val, form) do
-    quote do
-      if unquote(val), do: unquote(list) ++ unquote(form), else: unquote(list)
-    end
-  end
-  
   defmacro conj_front(list, val, form) do
     quote do
-      if unquote(val), do: unquote(list) ++ unquote(form), else: unquote(list)
+      if unquote(val), do: unquote(form) ++ unquote(list), else: unquote(list)
     end
   end
 
@@ -72,9 +58,11 @@ defmodule Mix.Tasks.Cmake do
     cmake(build_path, args ++ [source_path], env)
   end
 
-  def build(build_dir, args \\ [], env \\ %{}), do: cmake(build_path(build_dir), ["--build", "."] ++ args, env)
+  def build(build_dir, args \\ [], env \\ %{}),
+    do: cmake(build_path(build_dir), ["--build", "."] ++ args, env)
 
-  def install(build_dir, args \\ [], env \\ %{}), do: cmake(build_path(build_dir), ["--install", "."] ++ args, env)
+  def install(build_dir, args \\ [], env \\ %{}),
+    do: cmake(build_path(build_dir), ["--install", "."] ++ args, env)
 
   defp cmake(build_path, args, env) do
     opts = [
@@ -84,7 +72,9 @@ defmodule Mix.Tasks.Cmake do
       stderr_to_stdout: true
     ]
 
+    if Map.has_key?(env, "VERBOSE") do
     IO.inspect([args: args, opts: opts])
+    end
 
     {%IO.Stream{}, status} = System.cmd("cmake", args, opts)
     (status == 0)
@@ -155,6 +145,7 @@ defmodule Mix.Tasks.Cmake do
   end
 
   def add_env(env, _name, nil),                  do: env
+  def add_env(env, name, true),                  do: Map.put(env, name, "true")
   def add_env(env, name, i) when is_integer(i), do: Map.put(env, name, Integer.to_string(i))
   def add_env(env, name, f) when is_float(f),   do: Map.put(env, name, Float.to_string(f))
   def add_env(env, name, a) when is_atom(a),    do: Map.put(env, name, Atom.to_string(a))
@@ -192,4 +183,38 @@ defmodule Mix.Tasks.Cmake do
   def next(["++"|rest], _opts), do: {:second, rest}
   def next(["--"|rest], _opts), do: {:second, rest}
   defdelegate next(argv, opts), to: OptionParser
+end
+
+
+
+defmodule Mix.Tasks.Cmake.Debug do
+  use Mix.Task
+
+  alias Mix.Tasks.Cmake
+  require Cmake
+
+  @switches [
+    generator: :string,
+    verbose:   :boolean
+  ]
+
+  def run(argv) do
+    {:ok, opts, params, cmake_args} = Cmake.parse_argv(argv, strict: @switches)
+    IO.inspect(argv)
+    IO.inspect(opts)
+    IO.inspect(params)
+    IO.inspect(cmake_args)
+    
+    cmake_config = Cmake.get_config()
+
+    cmake_env = Cmake.default_env()
+      |> Cmake.add_env("CMAKE_GENERATOR", cmake_config[:generator])
+      |> Cmake.add_env("CMAKE_GENERATOR", opts[:generator])
+      |> Cmake.add_env("VERBOSE", opts[:verbose])
+      |> IO.inspect
+
+    cmake_args = cmake_args
+      |> Cmake.conj_front(opts[:generator], ["-G", "#{opts[:generator]}"])
+      |> IO.inspect
+  end
 end

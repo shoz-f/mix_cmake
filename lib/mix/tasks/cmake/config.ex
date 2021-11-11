@@ -2,6 +2,7 @@ defmodule  Mix.Tasks.Cmake.Config do
   use Mix.Task
 
   alias Mix.Tasks.Cmake
+  require Cmake
 
   @shortdoc "Generate build scripts based on the CMakeLists.txt"
   @moduledoc """
@@ -17,10 +18,13 @@ defmodule  Mix.Tasks.Cmake.Config do
   * `:source_dir` -
   * `:generator` -
   """
+  @switches [
+    generator: :string,
+  ]
   
   def run(argv) do
     with\
-      {:ok, _opts, dirs, cmake_args} <- Cmake.parse_argv(argv, strict: [verbose: :boolean])
+      {:ok, opts, dirs, cmake_args} <- Cmake.parse_argv(argv, strict: @switches)
     do
       cmake_config = Cmake.get_config()
 
@@ -30,6 +34,9 @@ defmodule  Mix.Tasks.Cmake.Config do
         []              -> [cmake_config[:build_dir], cmake_config[:source_dir]]
         _ -> exit("illegal arguments")
       end
+
+      cmake_args = cmake_args
+        |> Cmake.conj_front(opts[:generator], ["-G", "#{opts[:generator]}"])
 
       cmake_env = Cmake.default_env()
         |> Cmake.add_env("CMAKE_GENERATOR", cmake_config[:generator])

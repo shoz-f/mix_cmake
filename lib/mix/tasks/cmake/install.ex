@@ -17,12 +17,13 @@ defmodule Mix.Tasks.Cmake.Install do
   """
   
   @switches [
-    strip: :boolean
+    strip:   :boolean,
+    verbose: :boolean,
   ]
 
   def run(argv) do
     with\
-      {:ok, _opts, dirs, cmake_args} <- Cmake.parse_argv(argv, strict: [verbose: :boolean])
+      {:ok, opts, dirs, cmake_args} <- Cmake.parse_argv(argv, strict: @switches)
     do
       cmake_config = Cmake.get_config()
 
@@ -33,6 +34,7 @@ defmodule Mix.Tasks.Cmake.Install do
       end
 
       cmake_env = Cmake.default_env()
+        |> Cmake.add_env("VERBOSE", opts[:verbose])
 
       Cmake.install(build_dir, cmake_args, cmake_env)
     end
