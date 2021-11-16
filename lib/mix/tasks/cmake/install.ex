@@ -2,14 +2,18 @@ defmodule Mix.Tasks.Cmake.Install do
   use Mix.Task
   
   alias Mix.Tasks.Cmake
+  require Cmake
 
   @shortdoc "Install the application to the project's priv"
   @moduledoc """
   Install the application to the project's priv.
   
-    mix cmake.install [build_dir]
+    mix cmake.install [opt] [build_dir]
   
   ## Command line options
+
+  * `--strip`    -
+  * `--verbose`  -
   
   ## Configuration
 
@@ -33,8 +37,11 @@ defmodule Mix.Tasks.Cmake.Install do
         _ -> exit("illegal arguments")
       end
 
+      cmake_args = cmake_args
+        |> Cmake.conj_front(opts[:verbose],  ["--verbose"])
+        |> Cmake.conj_front(opts[:strip],    ["--strip"])
+
       cmake_env = Cmake.default_env()
-        |> Cmake.add_env("VERBOSE", opts[:verbose])
 
       Cmake.install(build_dir, cmake_args, cmake_env)
     end

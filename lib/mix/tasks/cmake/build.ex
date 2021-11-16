@@ -8,9 +8,13 @@ defmodule Mix.Tasks.Cmake.Build do
   @moduledoc """
   Build the CMake application.
   
-    mix cmake.build [build_dir] [++ CMake options]
+    mix cmake.build [opt] [build_dir] [++ CMake options]
   
   ## Command line options
+  
+  * `--parallel` - 
+  * `--target`   -
+  * `--verbose`  -
   
   ## Configuration
 
@@ -37,12 +41,12 @@ defmodule Mix.Tasks.Cmake.Build do
       end
 
       cmake_args = cmake_args
+        |> Cmake.conj_front(opts[:verbose],  ["--verbose"])
         |> Cmake.conj_front(opts[:parallel], ["--parallel", "#{opts[:parallel]}"])
-        |> Cmake.conj_front(opts[:target], ["--target", "#{opts[:target]}"])
+        |> Cmake.conj_front(opts[:target],   ["--target", "#{opts[:target]}"])
 
       cmake_env = Cmake.default_env()
         |> Cmake.add_env("CMAKE_BUILD_PARALLEL_LEVEL", cmake_config[:build_parallel_level])
-        |> Cmake.add_env("VERBOSE", opts[:verbose])
 
       Cmake.build(build_dir, cmake_args, cmake_env)
     end

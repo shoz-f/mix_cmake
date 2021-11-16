@@ -72,8 +72,8 @@ defmodule Mix.Tasks.Cmake do
       stderr_to_stdout: true
     ]
 
-    if Map.has_key?(env, "VERBOSE") do
-    IO.inspect([args: args, opts: opts])
+    if "--verbose" in args do
+      IO.inspect([args: args, opts: opts])
     end
 
     {%IO.Stream{}, status} = System.cmd("cmake", args, opts)
@@ -105,7 +105,6 @@ defmodule Mix.Tasks.Cmake do
     |> Keyword.put_new(:config_opts, [])
     |> Keyword.put_new(:build_opts, [])
   end
-
 
   @doc """
   Returns a map of default environment variables

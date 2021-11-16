@@ -12,6 +12,8 @@ defmodule  Mix.Tasks.Cmake.Config do
   
   ## Command line options
   
+  * `--generator` - 
+  
   ## Configuration
 
   * `:build_dir` - 
