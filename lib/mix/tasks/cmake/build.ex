@@ -12,14 +12,14 @@ defmodule Mix.Tasks.Cmake.Build do
   
   ## Command line options
   
-  * `--parallel` - 
-  * `--target`   -
-  * `--verbose`  -
+  * `--parallel` - parallel jobs level
+  * `--target`   - build target
+  * `--verbose`  - print process detail
   
   ## Configuration
 
-  * `:build_dir` - 
-  * `:build_parallel_level` -
+  * `:build_dir`            - working directory
+  * `:build_parallel_level` - parallel jobs level
   """
 
   @switches [
@@ -29,26 +29,23 @@ defmodule Mix.Tasks.Cmake.Build do
   ]
 
   def run(argv) do
-    with\
-      {:ok, opts, dirs, cmake_args} <- Cmake.parse_argv(argv, strict: @switches)
-    do
-      cmake_config = Cmake.get_config()
+    with {:ok, opts, dirs, cmake_args} <- Cmake.parse_argv(argv, strict: @switches),
+      do: cmd(dirs, opts, cmake_args)
+  end
 
-      [build_dir] = case dirs do
-        [build] -> [build]
-        []      -> [cmake_config[:build_dir]]
-        _ -> exit("illegal arguments")
-      end
+  def cmd(dirs, opts, cmake_args) do
+    cmake_config = Cmake.get_config()
 
-      cmake_args = cmake_args
-        |> Cmake.conj_front(opts[:verbose],  ["--verbose"])
-        |> Cmake.conj_front(opts[:parallel], ["--parallel", "#{opts[:parallel]}"])
-        |> Cmake.conj_front(opts[:target],   ["--target", "#{opts[:target]}"])
+    [build_dir, _] = Cmake.get_dirs(dirs, cmake_config)
 
-      cmake_env = Cmake.default_env()
-        |> Cmake.add_env("CMAKE_BUILD_PARALLEL_LEVEL", cmake_config[:build_parallel_level])
+    cmake_args = cmake_args
+      |> Cmake.conj_front(opts[:verbose],  ["--verbose"])
+      |> Cmake.conj_front(opts[:parallel], ["--parallel", "#{opts[:parallel]}"])
+      |> Cmake.conj_front(opts[:target],   ["--target", "#{opts[:target]}"])
 
-      Cmake.build(build_dir, cmake_args, cmake_env)
-    end
+    cmake_env = Cmake.default_env()
+      |> Cmake.add_env("CMAKE_BUILD_PARALLEL_LEVEL", cmake_config[:build_parallel_level])
+
+    Cmake.cmake(build_dir, ["--build", "."] ++ cmake_args, cmake_env)
   end
 end

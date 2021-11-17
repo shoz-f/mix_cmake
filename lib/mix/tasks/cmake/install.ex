@@ -12,12 +12,12 @@ defmodule Mix.Tasks.Cmake.Install do
   
   ## Command line options
 
-  * `--strip`    -
-  * `--verbose`  -
+  * `--strip`    - remove debug info from executable
+  * `--verbose`  - print process detail
   
   ## Configuration
 
-  * `:build_dir` - 
+  * `:build_dir` - working directory
   """
   
   @switches [
@@ -26,24 +26,21 @@ defmodule Mix.Tasks.Cmake.Install do
   ]
 
   def run(argv) do
-    with\
-      {:ok, opts, dirs, cmake_args} <- Cmake.parse_argv(argv, strict: @switches)
-    do
-      cmake_config = Cmake.get_config()
+    with {:ok, opts, dirs, cmake_args} <- Cmake.parse_argv(argv, strict: @switches),
+      do: cmd(dirs, opts, cmake_args)
+  end
+  
+  def cmd(dirs, opts, cmake_args) do
+    cmake_config = Cmake.get_config()
 
-      [build_dir] = case dirs do
-        [build] -> [build]
-        []      -> [cmake_config[:build_dir]]
-        _ -> exit("illegal arguments")
-      end
+    [build_dir, _] = Cmake.get_dirs(dirs, cmake_config)
 
-      cmake_args = cmake_args
-        |> Cmake.conj_front(opts[:verbose],  ["--verbose"])
-        |> Cmake.conj_front(opts[:strip],    ["--strip"])
+    cmake_args = cmake_args
+      |> Cmake.conj_front(opts[:verbose],  ["--verbose"])
+      |> Cmake.conj_front(opts[:strip],    ["--strip"])
 
-      cmake_env = Cmake.default_env()
+    cmake_env = Cmake.default_env()
 
-      Cmake.install(build_dir, cmake_args, cmake_env)
-    end
+    Cmake.cmake(build_dir, ["--install", "."] ++ cmake_args, cmake_env)
   end
 end

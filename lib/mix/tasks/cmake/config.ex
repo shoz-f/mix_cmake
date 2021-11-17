@@ -12,38 +12,40 @@ defmodule  Mix.Tasks.Cmake.Config do
   
   ## Command line options
   
-  * `--generator` - 
+  * `--generator` - specify generator
   
   ## Configuration
 
-  * `:build_dir` - 
-  * `:source_dir` -
-  * `:generator` -
+  * `:build_dir`  - working directory
+  * `:source_dir` - source directory
+  * `:generator`  - specify generator
   """
   @switches [
     generator: :string,
   ]
   
   def run(argv) do
-    with\
-      {:ok, opts, dirs, cmake_args} <- Cmake.parse_argv(argv, strict: @switches)
-    do
-      cmake_config = Cmake.get_config()
+    with {:ok, opts, dirs, cmake_args} <- Cmake.parse_argv(argv, strict: @switches),
+      do: cmd(dirs, opts, cmake_args)
+  end
+  
+  def cmd(dirs, opts, cmake_args) do
+    cmake_config = Cmake.get_config()
 
-      [build_dir, source_dir] = case dirs do
-        [build, source] -> [build, source]
-        [build]         -> [build, cmake_config[:source_dir]]
-        []              -> [cmake_config[:build_dir], cmake_config[:source_dir]]
-        _ -> exit("illegal arguments")
-      end
+    [build_dir, source_dir] = Cmake.get_dirs(dirs, cmake_config)
 
-      cmake_args = cmake_args
-        |> Cmake.conj_front(opts[:generator], ["-G", "#{opts[:generator]}"])
+    cmake_args = cmake_args
+      |> Cmake.conj_front(opts[:generator], ["-G", "#{opts[:generator]}"])
 
-      cmake_env = Cmake.default_env()
-        |> Cmake.add_env("CMAKE_GENERATOR", cmake_config[:generator])
+    cmake_env = Cmake.default_env()
+      |> Cmake.add_env("CMAKE_GENERATOR", cmake_config[:generator])
 
-      Cmake.config(build_dir, source_dir, cmake_args, cmake_env)
-    end
+    # construct cmake args
+    cmake_args = if build_dir == :global,
+      do:   ["-UCMAKE_HOME_DIRECTORY", "-UCONFU_DEPENDENCIES_SOURCE_DIR" | cmake_args], # add options to remove some cache entries
+      else: cmake_args
+
+    # invoke cmake
+    Cmake.cmake(build_dir, cmake_args ++ [Path.expand(source_dir)], cmake_env)
   end
 end
