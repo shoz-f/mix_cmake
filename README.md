@@ -1,21 +1,54 @@
-# MixCmake
+# Mix.Tasks.Cmake
 
-**TODO: Add description**
+Mix.Tasks.Cmake is Elixir mix task to run Cmake build tool.
 
 ## Installation
-
-If [available in Hex](https://hex.pm/docs/publish), the package can be installed
-by adding `mix_cmake` to your list of dependencies in `mix.exs`:
+Add following dependency to your `mix.exs`.
 
 ```elixir
 def deps do
   [
-    {:mix_cmake, "~> 0.1.0"}
+    {:mix_cmake, git: "https://github.com/shoz-f/mix_cmake.git"}
   ]
 end
 ```
 
-Documentation can be generated with [ExDoc](https://github.com/elixir-lang/ex_doc)
-and published on [HexDocs](https://hexdocs.pm). Once published, the docs can
-be found at [https://hexdocs.pm/mix_cmake](https://hexdocs.pm/mix_cmake).
+Optionaly you can include any Cmake configuration as `cmake:` attribute in project/0 list.
 
+```elixir:mix.exs
+...
+  def project do
+    [
+      ...
+      cmake: cmake()
+    ]
+  end
+  
+  def cmake() do
+    [
+      # Specify cmake build directory or pseudo-path {:local, :global}.
+      #   :local(default) - "./_build/.cmake_build"
+      #   :global - "~/.\#{Cmake.app_name()}"
+      #
+      build_dir: :local,
+      
+      # Specify cmake source directory.(default: File.cwd!)
+      #
+      source_dir: File.cwd!,
+      
+      # Specify generator name.
+      # "cmake --help" shows you build-in generators list.
+      #
+      generator: "MSYS Makefiles",
+      
+      # Specify jobs parallel level.
+      #
+      build_parallel_level: 4
+    ]
+  end
+```
+
+## Basic Usage
+
+## License
+Npy is licensed under the Apache License Version 2.0.
