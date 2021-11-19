@@ -12,34 +12,53 @@ defmodule Mix.Tasks.Cmake do
   @moduledoc """
   Generate CMake buiid scripts and then build/install the application.
   
-    mix cmake.all
+  $ mix cmake [opt] [build_dir] [source_dir]
   
   ## Command line options
-  * `--config` - generate build script
+  
+  * `--noconfig`  - generate build script
+  * `--generator` - specify generator
+  * `--parallel`  - parallel jobs level
+  * `--target`    - build target
+  * `--strip`     - remove debug info from executable
+  * `--verbose`   - print process detail
   
   ## Configuration
+  Add following configurations at project/1 in your mix.exs if you need.
 
-  * `:build_dir` -
-  * `:source_dir` - specify project directory.
-  * `:generator` -
-  * `:build_parallel_level` -
+  ```elixir
+  def project do
+    [
+      cmake: [...]
+    ]
+  end
+  ```
+
+  * `:build_dir`  - working directory {:local, :global, any_directory}
+  * `:source_dir` - source directory
+  * `:generator`  - specify generator
+  * `:build_parallel_level` - parallel jobs level
   """
 
   @switches [
-    config: :boolean
+    noconfig:  :boolean,
+    generator: :string,
+    parallel:  :integer,
+    target:    :string,
+    strip:     :boolean,
+    verbose:   :boolean
   ]
 
   def run(argv) do
     with\
       {:ok, opts, dirs, _cmake_args} <- Cmake.parse_argv(argv, strict: @switches)
     do
-      #if opts[:config], do: Mix.Task.run("cmake.config", argv)
+      unless opts[:noconfig] do
+        Cmake.Config.cmd(dirs, opts)
+      end
 
-      #Mix.Task.run("cmake.build", argv)
-      #Mix.Task.run("cmake.install", argv)
-      
-      Cmake.Build.cmd(dirs, opts, [])
-      Cmake.Install.cmd(dirs, opts, [])
+      Cmake.Build.cmd(dirs, opts)
+      Cmake.Install.cmd(dirs, opts)
     end
   end
 
@@ -86,7 +105,7 @@ defmodule Mix.Tasks.Cmake do
   def get_config() do
     Keyword.get(Mix.Project.config(), :cmake, [])
     # default setting if it has no configuration
-    |> Keyword.put_new(:build_dir, :priv)
+    |> Keyword.put_new(:build_dir, :local)
     |> Keyword.put_new(:source_dir, File.cwd!)
     |> Keyword.put_new(:config_opts, [])
     |> Keyword.put_new(:build_opts, [])
@@ -166,38 +185,4 @@ defmodule Mix.Tasks.Cmake do
   def next(["++"|rest], _opts), do: {:second, rest}
   def next(["--"|rest], _opts), do: {:second, rest}
   defdelegate next(argv, opts), to: OptionParser
-end
-
-
-
-defmodule Mix.Tasks.Cmake.Debug do
-  use Mix.Task
-
-  alias Mix.Tasks.Cmake
-  require Cmake
-
-  @switches [
-    generator: :string,
-    verbose:   :boolean
-  ]
-
-  def run(argv) do
-    {:ok, opts, params, cmake_args} = Cmake.parse_argv(argv, strict: @switches)
-    IO.inspect(argv)
-    IO.inspect(opts)
-    IO.inspect(params)
-    IO.inspect(cmake_args)
-    
-    cmake_config = Cmake.get_config()
-
-    cmake_env = Cmake.default_env()
-      |> Cmake.add_env("CMAKE_GENERATOR", cmake_config[:generator])
-      |> Cmake.add_env("CMAKE_GENERATOR", opts[:generator])
-      |> Cmake.add_env("VERBOSE", opts[:verbose])
-      |> IO.inspect
-
-    cmake_args = cmake_args
-      |> Cmake.conj_front(opts[:generator], ["-G", "#{opts[:generator]}"])
-      |> IO.inspect
-  end
 end

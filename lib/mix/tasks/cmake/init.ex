@@ -6,21 +6,23 @@ defmodule Mix.Tasks.Cmake.Init do
   
   @shortdoc "Create CMakeLists.txt"
   @moduledoc """
+  Create CMakeLists.txt
+  
+  $ mix cmake.init [source_dir]
   """
 
   def run(argv) do
-    cmake_config = Cmake.get_config()
-
     [source_dir] = case argv do
       [source] -> [source]
-      []       -> [cmake_config[:source_dir]]
+      []       -> [File.cwd!]
       _ -> exit("illegal arguments")
     end
-
+    
     assigns = [
       app_name: Cmake.app_name()
     ]
     create_file(Path.join(source_dir, "CMakeLists.txt"), cmakelists_template(assigns))
+    create_file(Path.join(source_dir, "cmake.cfg"), cmakecfg_template([]))
   end
   
   embed_template(:cmakelists, """
@@ -51,5 +53,31 @@ defmodule Mix.Tasks.Cmake.Init do
     RUNTIME
     DESTINATION ${CMAKE_SOURCE_DIR}/priv
   )
+  """)
+  
+  embed_template(:cmakecfg, """
+    # Cmake configuration.
+    defp cmake do
+      [
+        # Specify cmake build directory or pseudo-location {:local, :global}.
+        #   :local(default) - "./_build/.cmake_build"
+        #   :global - "~/.\#{Cmake.app_name()}"
+        #
+        #build_dir: :local,
+        
+        # Specify cmake source directory.(default: File.cwd!)
+        #
+        #source_dir: File.cwd!,
+        
+        # Specify generator name.
+        # "cmake --help" shows you build-in generators list.
+        #
+        #generator: "",
+        
+        # Specify jobs parallel level.
+        #
+        #build_parallel_level: 1
+      ]
+    end
   """)
 end

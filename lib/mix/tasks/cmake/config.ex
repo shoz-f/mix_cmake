@@ -8,7 +8,7 @@ defmodule  Mix.Tasks.Cmake.Config do
   @moduledoc """
   Generate build scripts based on the 'CMakeLists.txt'.
   
-    mix cmake.config [build_dir] [source_dir] [++ CMake options]
+  $ mix cmake.config [opt] [build_dir] [source_dir] [++ CMake options]
   
   ## Command line options
   
@@ -29,7 +29,7 @@ defmodule  Mix.Tasks.Cmake.Config do
       do: cmd(dirs, opts, cmake_args)
   end
   
-  def cmd(dirs, opts, cmake_args) do
+  def cmd(dirs, opts, cmake_args \\ []) do
     cmake_config = Cmake.get_config()
 
     [build_dir, source_dir] = Cmake.get_dirs(dirs, cmake_config)

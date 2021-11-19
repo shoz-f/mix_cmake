@@ -8,7 +8,7 @@ defmodule Mix.Tasks.Cmake.Build do
   @moduledoc """
   Build the CMake application.
   
-    mix cmake.build [opt] [build_dir] [++ CMake options]
+  $ mix cmake.build [opt] [build_dir] [++ CMake options]
   
   ## Command line options
   
@@ -33,7 +33,7 @@ defmodule Mix.Tasks.Cmake.Build do
       do: cmd(dirs, opts, cmake_args)
   end
 
-  def cmd(dirs, opts, cmake_args) do
+  def cmd(dirs, opts, cmake_args \\ []) do
     cmake_config = Cmake.get_config()
 
     [build_dir, _] = Cmake.get_dirs(dirs, cmake_config)

@@ -8,7 +8,7 @@ defmodule Mix.Tasks.Cmake.Install do
   @moduledoc """
   Install the application to the project's priv.
   
-    mix cmake.install [opt] [build_dir]
+  $ mix cmake.install [opt] [build_dir]
   
   ## Command line options
 
@@ -30,7 +30,7 @@ defmodule Mix.Tasks.Cmake.Install do
       do: cmd(dirs, opts, cmake_args)
   end
   
-  def cmd(dirs, opts, cmake_args) do
+  def cmd(dirs, opts, cmake_args \\ []) do
     cmake_config = Cmake.get_config()
 
     [build_dir, _] = Cmake.get_dirs(dirs, cmake_config)
