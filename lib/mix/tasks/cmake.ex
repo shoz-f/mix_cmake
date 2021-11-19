@@ -16,10 +16,11 @@ defmodule Mix.Tasks.Cmake do
   
   ## Command line options
   
-  * `--noconfig`  - generate build script
+  * `--config`    - generate build script
   * `--generator` - specify generator
   * `--parallel`  - parallel jobs level
   * `--target`    - build target
+  * `--clean`     - clean before build target
   * `--strip`     - remove debug info from executable
   * `--verbose`   - print process detail
   
@@ -41,10 +42,11 @@ defmodule Mix.Tasks.Cmake do
   """
 
   @switches [
-    noconfig:  :boolean,
+    config:    :boolean,
     generator: :string,
     parallel:  :integer,
     target:    :string,
+    clean:     :boolean,
     strip:     :boolean,
     verbose:   :boolean
   ]
@@ -53,7 +55,7 @@ defmodule Mix.Tasks.Cmake do
     with\
       {:ok, opts, dirs, _cmake_args} <- Cmake.parse_argv(argv, strict: @switches)
     do
-      unless opts[:noconfig] do
+      if opts[:config] do
         Cmake.Config.cmd(dirs, opts)
       end
 

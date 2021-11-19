@@ -14,6 +14,7 @@ defmodule Mix.Tasks.Cmake.Build do
   
   * `--parallel` - parallel jobs level
   * `--target`   - build target
+  * `--clean`     - clean before build target
   * `--verbose`  - print process detail
   
   ## Configuration
@@ -25,6 +26,7 @@ defmodule Mix.Tasks.Cmake.Build do
   @switches [
     parallel: :integer,
     target:   :string,
+    clean:    :boolean,
     verbose:  :boolean
   ]
 
@@ -42,6 +44,7 @@ defmodule Mix.Tasks.Cmake.Build do
       |> Cmake.conj_front(opts[:verbose],  ["--verbose"])
       |> Cmake.conj_front(opts[:parallel], ["--parallel", "#{opts[:parallel]}"])
       |> Cmake.conj_front(opts[:target],   ["--target", "#{opts[:target]}"])
+      |> Cmake.conj_front(opts[:clean],    ["--clean-first"])
 
     cmake_env = Cmake.default_env()
       |> Cmake.add_env("CMAKE_BUILD_PARALLEL_LEVEL", cmake_config[:build_parallel_level])
