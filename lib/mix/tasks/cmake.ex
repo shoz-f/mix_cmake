@@ -64,7 +64,9 @@ defmodule Mix.Tasks.Cmake do
     end
   end
 
-
+  @doc """
+  Invoke cmake command with `args`.
+  """
   def cmake(build_dir, args, env) do
     build_path  = build_path(build_dir)
 
@@ -86,24 +88,39 @@ defmodule Mix.Tasks.Cmake do
     (status == 0)
   end
 
+  @doc """
+  Remove cmake build directory. (interpret pseudo-path)
+  """
+  def remove_build(build_dir) do
+    build_path = build_path(build_dir)
+    File.rm_rf!(build_path)
+  end
+
+  # interpret pseudo-path
   defp build_path(:local),  do: Mix.Project.build_path() |> Path.join(".cmake_build")
   defp build_path(:global), do: Path.absname(System.user_home) |> Path.join(".#{app_name()}")
   defp build_path(dir),     do: Path.expand(dir)
 
-  @doc "get application name"
+  @doc """
+  Get application name.
+  """
   def app_name(), do: Atom.to_string(Mix.Project.config[:app])
 
-  @doc "get build/source directroy"
+  @doc """
+  Get build/source directory.
+  """
   def get_dirs(dirs, config) do
-	case dirs do
-	  [build, source] -> [build, source]
-	  [build]         -> [build, config[:source_dir]]
-	  []              -> [config[:build_dir], config[:source_dir]]
-	  _ -> exit("illegal arguments")
-	end
+    case dirs do
+      [build, source] -> [build, source]
+      [build]         -> [build, config[:source_dir]]
+      []              -> [config[:build_dir], config[:source_dir]]
+      _ -> exit("illegal arguments")
+    end
   end
   
-  @doc "get :cmake configuration from Mix.exs"
+  @doc """
+  Get :cmake configuration from Mix.exs.
+  """
   def get_config() do
     Keyword.get(Mix.Project.config(), :cmake, [])
     # default setting if it has no configuration
@@ -114,7 +131,7 @@ defmodule Mix.Tasks.Cmake do
   end
 
   @doc """
-  Returns a map of default environment variables
+  Return a map of default environment variables.
   """
   def default_env() do
     root_dir = :code.root_dir()
@@ -148,6 +165,9 @@ defmodule Mix.Tasks.Cmake do
 
   defp env(var, default), do: (System.get_env(var) || default)
 
+  @doc """
+  Add an environment variable for child process.
+  """
   def add_env(env, _name, nil),                  do: env
   def add_env(env, name, true),                  do: Map.put(env, name, "true")
   def add_env(env, name, i) when is_integer(i), do: Map.put(env, name, Integer.to_string(i))
@@ -156,7 +176,7 @@ defmodule Mix.Tasks.Cmake do
   def add_env(env, name, s),                     do: Map.put(env, name, s)
 
   @doc """
-  parse command line arguments.
+  parse command line arguments. (custom)
   """
   def parse_argv(argv, config \\ []) when is_list(argv) and is_list(config) do
     do_parse(argv, config, [], [])

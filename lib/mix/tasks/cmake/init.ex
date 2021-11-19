@@ -59,7 +59,7 @@ defmodule Mix.Tasks.Cmake.Init do
     # Cmake configuration.
     defp cmake do
       [
-        # Specify cmake build directory or pseudo-location {:local, :global}.
+        # Specify cmake build directory or pseudo-path {:local, :global}.
         #   :local(default) - "./_build/.cmake_build"
         #   :global - "~/.\#{Cmake.app_name()}"
         #
