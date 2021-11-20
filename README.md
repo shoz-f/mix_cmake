@@ -87,4 +87,4 @@ $ mix cmake.clean
 CAUTION: `clean`'s option `--all` means to remove whole BUILD working directory. You have to run `mix cmake.config` next time. 
 
 ## License
-Npy is licensed under the Apache License Version 2.0.
+Mix Cmake is licensed under the Apache License Version 2.0.
