@@ -3,7 +3,7 @@
 Mix Cmake is Elixir mix task to run Cmake build tool.
 
 ## Installation
-Add following dependency to your `mix.exs`.
+Add following dependency to your `mix.exs`,
 
 ```elixir
 def deps do
@@ -11,6 +11,14 @@ def deps do
     {:mix_cmake, "~> 0.1.0"}
   ]
 end
+```
+
+and compile `mix_cmake`.
+
+```shell
+$ mix deps.get
+$ mix deps.compile
+==> mix_cmake
 ```
 
 Optionaly you can include any Cmake configuration as `cmake:` attribute in project/0 list.
