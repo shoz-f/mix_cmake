@@ -8,7 +8,7 @@ Add following dependency to your `mix.exs`.
 ```elixir
 def deps do
   [
-    {:mix_cmake, git: "https://github.com/shoz-f/mix_cmake.git"}
+    {:mix_cmake, "~> 0.1.0"}
   ]
 end
 ```
