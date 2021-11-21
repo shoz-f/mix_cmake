@@ -21,7 +21,7 @@ $ mix deps.compile
 ==> mix_cmake
 ```
 
-Optionaly you can include any Cmake configuration as `cmake:` attribute in project/0 list.
+Optionaly you can include some Cmake configuration as `cmake:` attribute in project/0 list.
 
 ```elixir:mix.exs
 def project do
