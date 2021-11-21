@@ -78,13 +78,13 @@ $ mix cmake --config
 
 Of course, `config` sub-command need to be run once. "mix cmake" with no options executes `build` and `install` only.
 
-You can remove optupts of `build` to invoke sub-command `clean`.
+You can remove optupts built by Cmake to invoke sub-command `clean`.
 
 ```shell
 $ mix cmake.clean
 ```
 
-CAUTION: `clean`'s option `--all` means to remove whole BUILD working directory. You have to run `mix cmake.config` next time. 
+CAUTION: `clean`'s option `--all` means to remove WHOLE BUILD working directory. You will have to run `mix cmake.config` next time. 
 
 ## License
 Mix Cmake is licensed under the Apache License Version 2.0.
