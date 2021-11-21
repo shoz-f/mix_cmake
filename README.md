@@ -57,7 +57,7 @@ end
 
 ## Basic Usage
 At the first, you need to prepare the "CMakeLists.txt" for your project.
-Mix Cmake can generate boiler plate "CMakeLists.txt" if you want. It also make a snipet of cmake/0 - Cmake configuration.
+Mix Cmake can generate boiler plate "CMakeLists.txt" if you want. It also make a snipet of cmake/0 - Cmake configuration - include `mix.exs`.
 
 ```shell
 $ cd <your project>
