@@ -53,7 +53,7 @@ defmodule Mix.Tasks.Cmake do
 
   def run(argv) do
     with\
-      {:ok, opts, dirs, _cmake_args} <- Cmake.parse_argv(argv, strict: @switches)
+      {:ok, opts, dirs, _cmake_args} <- parse_argv(argv, strict: @switches)
     do
       if opts[:config] do
         Cmake.Config.cmd(dirs, opts)

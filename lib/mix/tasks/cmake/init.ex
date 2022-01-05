@@ -11,6 +11,7 @@ defmodule Mix.Tasks.Cmake.Init do
   $ mix cmake.init [source_dir]
   """
 
+  @doc false
   def run(argv) do
     [source_dir] = case argv do
       [source] -> [source]

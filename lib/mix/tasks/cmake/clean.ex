@@ -21,11 +21,15 @@ defmodule Mix.Tasks.Cmake.Clean do
     verbose:  :boolean
   ]
 
+  @doc false
   def run(argv) do
     with {:ok, opts, dirs, _cmake_args} <- Cmake.parse_argv(argv, strict: @switches),
       do: cmd(dirs, opts, [])
   end
 
+  @doc false
+  def cmd(), do: cmd([], [], [])
+  @doc false
   def cmd(dirs, opts, _cmake_args \\ []) do
     cmake_config = Cmake.get_config()
 

@@ -24,11 +24,15 @@ defmodule  Mix.Tasks.Cmake.Config do
     generator: :string,
   ]
   
+  @doc false
   def run(argv) do
     with {:ok, opts, dirs, cmake_args} <- Cmake.parse_argv(argv, strict: @switches),
       do: cmd(dirs, opts, cmake_args)
   end
   
+  @doc false
+  def cmd(), do: cmd([], [], [])
+  @doc false
   def cmd(dirs, opts, cmake_args \\ []) do
     cmake_config = Cmake.get_config()
 
