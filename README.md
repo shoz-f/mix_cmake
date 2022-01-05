@@ -86,5 +86,25 @@ $ mix cmake.clean
 
 CAUTION: `clean`'s option `--all` means to remove WHOLE BUILD working directory. You will have to run `mix cmake.config` next time. 
 
+## Compiler Task
+There is also a compiler task - Mix.Tasks.Compile.Cmake. You can execute cmake by invoking `mix compile`.
+In this case, you need to add the following settings to `mix.exs`.
+
+```elixir
+def project() do
+[
+  app: :myapp,
+  deps: deps(),
+  compilers: [:cmake] ++ Mix.compilers,
+  
+  cmake: [
+    build_dir: :local,
+    build_parallel_level: 4,
+    ...
+  ]
+]
+end
+```
+
 ## License
 Mix Cmake is licensed under the Apache License Version 2.0.
