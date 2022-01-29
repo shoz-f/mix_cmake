@@ -89,6 +89,14 @@ defmodule Mix.Tasks.Cmake do
   end
 
   @doc """
+  Returns true if the build directory exists.
+  """
+  def build_dir_exists?(build_dir) do
+    build_path(build_dir)
+    |> File.exists?()
+  end
+
+  @doc """
   Remove cmake build directory. (interpret pseudo-path)
   """
   def remove_build(build_dir) do

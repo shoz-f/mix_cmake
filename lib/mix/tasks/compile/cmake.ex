@@ -53,7 +53,12 @@ defmodule Mix.Tasks.Compile.Cmake do
 
   @doc false
   def run(_args) do
-    if Cmake.Config.cmd() && Cmake.Build.cmd() && Cmake.Install.cmd(), do: :ok, else: :error
+    if already_built?() || (Cmake.Config.cmd() && Cmake.Build.cmd() && Cmake.Install.cmd()), do: :ok, else: :error
+  end
+
+  def already_built?() do
+    Cmake.get_config()[:build_dir]
+    |> Cmake.build_dir_exists?()
   end
 
   @doc false
