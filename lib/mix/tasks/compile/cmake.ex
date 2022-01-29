@@ -5,6 +5,9 @@ defmodule Mix.Tasks.Compile.Cmake do
   @shortdoc "Runs `cmake` in the current project."
   @moduledoc """
   Runs `cmake` in the current project.
+
+  It will skip execution cmake if the build directory exists.
+  You can invoke `mix cmake --config` instead, if you want to cmake again.
   
   ## Configuration
   
