@@ -44,6 +44,14 @@ defmodule  Mix.Tasks.Cmake.Config do
     cmake_env = Cmake.default_env()
       |> Cmake.add_env("CMAKE_GENERATOR", cmake_config[:generator])
 
+    # specify toolchain file for cross-compilation if available
+    cmake_toolchain_file = System.get_env("CMAKE_TOOLCHAIN_FILE")
+
+    cmake_args =
+      if cmake_toolchain_file,
+        do: ["-DCMAKE_TOOLCHAIN_FILE=#{cmake_toolchain_file}" | cmake_args],
+        else: cmake_args
+
     # construct cmake args
     cmake_args = if build_dir == :global,
       do:   ["-UCMAKE_HOME_DIRECTORY", "-UCONFU_DEPENDENCIES_SOURCE_DIR" | cmake_args], # add options to remove some cache entries
