@@ -42,6 +42,7 @@ defmodule Mix.Tasks.Cmake.Install do
     cmake_args = cmake_args
       |> Cmake.conj_front(opts[:verbose],  ["--verbose"])
       |> Cmake.conj_front(opts[:strip],    ["--strip"])
+      |> Cmake.conj_front(cmake_config[:build_config], ["--config", "#{cmake_config[:build_config]}"])
 
     cmake_env = Cmake.default_env()
 

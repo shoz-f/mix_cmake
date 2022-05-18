@@ -21,6 +21,7 @@ defmodule Mix.Tasks.Cmake.Build do
 
   * `:build_dir`            - working directory
   * `:build_parallel_level` - parallel jobs level
+  * `:build_config`         - build configuration (with Visual C++)
   """
 
   @switches [
@@ -49,6 +50,7 @@ defmodule Mix.Tasks.Cmake.Build do
       |> Cmake.conj_front(opts[:parallel], ["--parallel", "#{opts[:parallel]}"])
       |> Cmake.conj_front(opts[:target],   ["--target", "#{opts[:target]}"])
       |> Cmake.conj_front(opts[:clean],    ["--clean-first"])
+      |> Cmake.conj_front(cmake_config[:build_config], ["--config", "#{cmake_config[:build_config]}"])
 
     cmake_env = Cmake.default_env()
       |> Cmake.add_env("CMAKE_BUILD_PARALLEL_LEVEL", cmake_config[:build_parallel_level])
