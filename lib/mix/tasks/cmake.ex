@@ -43,6 +43,7 @@ defmodule Mix.Tasks.Cmake do
 
   @switches [
     config:    :boolean,
+    platform:  :string,
     generator: :string,
     parallel:  :integer,
     target:    :string,

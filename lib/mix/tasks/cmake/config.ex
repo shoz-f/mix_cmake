@@ -22,6 +22,7 @@ defmodule  Mix.Tasks.Cmake.Config do
   """
   @switches [
     generator: :string,
+    platform:  :string,
   ]
   
   @doc false
@@ -40,6 +41,8 @@ defmodule  Mix.Tasks.Cmake.Config do
 
     cmake_args = cmake_args
       |> Cmake.conj_front(opts[:generator], ["-G", "#{opts[:generator]}"])
+      |> Cmake.conj_front(opts[:platform], ["-A", "#{opts[:platform]}"])
+      |> Cmake.conj_front(cmake_config[:platform], ["-A", "#{cmake_config[:platform]}"])
 
     cmake_env = Cmake.default_env()
       |> Cmake.add_env("CMAKE_GENERATOR", cmake_config[:generator])
