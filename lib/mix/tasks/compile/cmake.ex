@@ -1,5 +1,5 @@
 defmodule Mix.Tasks.Compile.Cmake do
-  use Mix.Task
+  use Mix.Task.Compiler
   alias Mix.Tasks.Cmake
 
   @shortdoc "Runs `cmake` in the current project."
@@ -56,13 +56,23 @@ defmodule Mix.Tasks.Compile.Cmake do
 
   @doc false
   def run(_args) do
-    if (already_built?() || Cmake.Config.cmd() && Cmake.Build.cmd()) && Cmake.Install.cmd(), do: :ok, else: :error
+    cond do
+      check_env?("CMAKE_SKIP") ->
+        :ok
+      (already_built?() || Cmake.Config.cmd() && Cmake.Build.cmd()) && Cmake.Install.cmd() ->
+        :ok
+      true ->
+        {:error, []}
+    end
   end
 
-  def already_built?() do
+  defp already_built?() do
     Cmake.get_config()[:build_dir]
     |> Cmake.build_dir_exists?()
   end
+
+  defp check_env?(name), do:
+    System.get_env(name, "NO") |> String.upcase() |> Kernel.in(["YES", "OK", "TRUE"])
 
   @doc false
   def clean() do
