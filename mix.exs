@@ -4,8 +4,8 @@ defmodule MixCmake.MixProject do
   def project do
     [
       app: :mix_cmake,
-      version: "0.1.4",
-      elixir: "~> 1.11",
+      version: "0.1.5",
+      elixir: "~> 1.14",
       start_permanent: Mix.env() == :prod,
       description: description(),
       package: package(),

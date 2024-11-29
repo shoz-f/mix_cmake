@@ -8,7 +8,7 @@ Add following dependency to your `mix.exs`,
 ```elixir
 def deps do
   [
-    {:mix_cmake, "~> 0.1.4"}
+    {:mix_cmake, "~> 0.1.5"}
   ]
 end
 ```
