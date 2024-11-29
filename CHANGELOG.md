@@ -1,3 +1,12 @@
+# Release 0.1.4(Nov 29 2024)
+
+## Breaking Changes
+
+## Major Features and Improvements
+* Add option `trace`, `define`, `undef` and `recache` for cmake.config.
+        
+## Bug Fixes and Other Changes
+
 # Release 0.1.3(May 18 2022)
 
 ## Breaking Changes

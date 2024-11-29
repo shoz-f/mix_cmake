@@ -7,33 +7,39 @@ defmodule Mix.Tasks.Cmake.Build do
   @shortdoc "Build the CMake application"
   @moduledoc """
   Build the CMake application.
-  
+
   $ mix cmake.build [opt] [build_dir] [++ CMake options]
-  
+
   ## Command line options
-  
-  * `--parallel` - parallel jobs level
-  * `--target`   - build target
-  * `--clean`     - clean before build target
-  * `--verbose`  - print process detail
-  
+
+  * `--parallel <n>`    - parallel jobs level
+  * `--target <target>` - build target
+  * `--clean-first`     - clean before build target
+  * `--verbose`         - print process detail
+
   ## Configuration
 
   * `:build_dir`            - working directory
   * `:build_parallel_level` - parallel jobs level
   * `:build_config`         - build configuration (with Visual C++)
+  * `:target <target>`      - build target if command line options has no `--target`.
   """
 
   @switches [
-    parallel: :integer,
-    target:   :string,
-    clean:    :boolean,
-    verbose:  :boolean
+    parallel:    :integer,
+    target:      :string,
+    clean_first: :boolean,
+    verbose:     :boolean
+  ]
+  @aliases [
+    j: :parallel,
+    t: :target,
+    v: :verbose,
   ]
 
   @doc false
   def run(argv) do
-    with {:ok, opts, dirs, cmake_args} <- Cmake.parse_argv(argv, strict: @switches),
+    with {:ok, opts, dirs, cmake_args} <- Cmake.parse_argv(argv, aliases: @aliases, strict: @switches),
       do: cmd(dirs, opts, cmake_args)
   end
 
@@ -45,12 +51,20 @@ defmodule Mix.Tasks.Cmake.Build do
 
     [build_dir, _] = Cmake.get_dirs(dirs, cmake_config)
 
-    cmake_args = cmake_args
-      |> Cmake.conj_front(opts[:verbose],  ["--verbose"])
-      |> Cmake.conj_front(opts[:parallel], ["--parallel", "#{opts[:parallel]}"])
-      |> Cmake.conj_front(opts[:target],   ["--target", "#{opts[:target]}"])
-      |> Cmake.conj_front(opts[:clean],    ["--clean-first"])
-      |> Cmake.conj_front(cmake_config[:build_config], ["--config", "#{cmake_config[:build_config]}"])
+    cmake_args =
+      Enum.flat_map(cmake_config, fn
+        {:target, x}         -> unless(Keyword.has_key?(opts, :target), do: ["--target", "#{x}"], else: [])
+        {:build_config, x}   -> ["--config", "#{x}"]
+        _ -> []
+      end)
+      ++ Enum.flat_map(opts, fn
+        {:verbose, true}     -> ["--verbose"]
+        {:parallel, x}       -> ["--parallel", "#{x}"]
+        {:target, x}         -> ["--target", "#{x}"]
+        {:clean_first, true} -> ["--clean-first"]
+        _ -> []
+      end)
+      ++ cmake_args
 
     cmake_env = Cmake.default_env()
       |> Cmake.add_env("CMAKE_BUILD_PARALLEL_LEVEL", cmake_config[:build_parallel_level])

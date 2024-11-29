@@ -7,18 +7,18 @@ defmodule Mix.Tasks.Cmake.Clean do
   @shortdoc "Clean outputs of Cmake"
   @moduledoc """
   Clean outputs of Cmake.
-  
+
   $ mix cmake.clean [opt]
-  
+
   ## Command line options
-  
+
   * `--all`     - remove cmake build directory.
   * `--verbose` - print process detail
   """
 
   @switches [
-    all: :boolean,
-    verbose:  :boolean
+    all:     :boolean,
+    verbose: :boolean
   ]
 
   @doc false
@@ -38,10 +38,14 @@ defmodule Mix.Tasks.Cmake.Clean do
     if opts[:all] do
       Cmake.remove_build(build_dir)
     else
-      cmake_args = ["--target", "clean"]
-        |> Cmake.conj_front(opts[:verbose],  ["--verbose"])
+      cmake_args =
+        Enum.flat_map(opts, fn
+          {:verbose, true} -> ["--verbose"]
+          _ -> []
+        end)
+        ++ ["--target", "clean"]
 
-        cmake_env = Cmake.default_env()
+      cmake_env = Cmake.default_env()
 
       Cmake.cmake(build_dir, ["--build", "."]  ++ cmake_args, cmake_env)
     end

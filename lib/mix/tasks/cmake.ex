@@ -2,28 +2,22 @@ defmodule Mix.Tasks.Cmake do
   use Mix.Task
   alias Mix.Tasks.Cmake
 
-  defmacro conj_front(list, val, form) do
-    quote do
-      if unquote(val), do: unquote(form) ++ unquote(list), else: unquote(list)
-    end
-  end
-
   @shortdoc "Generate CMake buiid scripts and then build/install the application"
   @moduledoc """
   Generate CMake buiid scripts and then build/install the application.
-  
+
   $ mix cmake [opt] [build_dir] [source_dir]
-  
+
   ## Command line options
-  
-  * `--config`    - generate build script
-  * `--generator` - specify generator
-  * `--parallel`  - parallel jobs level
-  * `--target`    - build target
-  * `--clean`     - clean before build target
-  * `--strip`     - remove debug info from executable
-  * `--verbose`   - print process detail
-  
+
+  * `--config`      - generate build script
+  * `--generator`   - specify generator
+  * `--parallel`    - parallel jobs level
+  * `--target`      - build target
+  * `--clean-first` - clean before build target
+  * `--strip`       - remove debug info from executable
+  * `--verbose`     - print process detail
+
   ## Configuration
   Add following configurations at project/1 in your mix.exs if you need.
 
@@ -42,14 +36,20 @@ defmodule Mix.Tasks.Cmake do
   """
 
   @switches [
-    config:    :boolean,
-    platform:  :string,
-    generator: :string,
-    parallel:  :integer,
-    target:    :string,
-    clean:     :boolean,
-    strip:     :boolean,
-    verbose:   :boolean
+    config:      :boolean,
+    generator:   :string,
+    platform:    :string,
+    define:      :keep,
+    undef:       :keep,
+    trace:       :boolean,
+    recache:     :boolean,
+
+    parallel:    :integer,
+    target:      :string,
+    clean_first: :boolean,
+
+    strip:       :boolean,
+    verbose:     :boolean,
   ]
 
   def run(argv) do
@@ -105,6 +105,17 @@ defmodule Mix.Tasks.Cmake do
     File.rm_rf!(build_path)
   end
 
+  @doc """
+
+  """
+  def remove_cache(build_dir) do
+    build_path = build_path(build_dir)
+
+    IO.puts("-- remove CMakeCache.txt")
+    cache_path = Path.join(build_path, "CMakeCache.txt")
+    File.rm(cache_path)
+  end
+
   # interpret pseudo-path
   defp build_path(:local),  do: Mix.Project.build_path() |> Path.join(".cmake_build")
   defp build_path(:global), do: Path.absname(System.user_home) |> Path.join(".#{app_name()}")
@@ -126,7 +137,7 @@ defmodule Mix.Tasks.Cmake do
       _ -> exit("illegal arguments")
     end
   end
-  
+
   @doc """
   Get :cmake configuration from Mix.exs.
   """
@@ -177,12 +188,12 @@ defmodule Mix.Tasks.Cmake do
   @doc """
   Add an environment variable for child process.
   """
-  def add_env(env, _name, nil),                  do: env
-  def add_env(env, name, true),                  do: Map.put(env, name, "true")
+  def add_env(env, _name, nil),                 do: env
+  def add_env(env, name, true),                 do: Map.put(env, name, "true")
   def add_env(env, name, i) when is_integer(i), do: Map.put(env, name, Integer.to_string(i))
   def add_env(env, name, f) when is_float(f),   do: Map.put(env, name, Float.to_string(f))
   def add_env(env, name, a) when is_atom(a),    do: Map.put(env, name, Atom.to_string(a))
-  def add_env(env, name, s),                     do: Map.put(env, name, s)
+  def add_env(env, name, s),                    do: Map.put(env, name, s)
 
   @doc """
   parse command line arguments. (custom)
@@ -200,7 +211,7 @@ defmodule Mix.Tasks.Cmake do
       {:second, rest} ->  # start of 2nd args
         {:ok, opts, Enum.reverse(args), rest}
       {:ok, option, value, rest} ->
-        do_parse(rest, config, [{option, value}|Keyword.delete(opts, option)], args)
+        do_parse(rest, config, store_opts(opts, option, value, config), args)
       {:invalid, key, value, _rest} ->
         {:invalid, key, value}
       {:undefined, _key, _value, rest} ->
@@ -209,6 +220,19 @@ defmodule Mix.Tasks.Cmake do
         do_parse(rest, config, opts, [String.to_atom(atom)|args])
       {:error, [arg|rest]} ->
         do_parse(rest, config, opts, [arg|args])
+    end
+  end
+
+  defp store_opts(opts, option, value, config) do
+    kind = Keyword.get(config, :switches) || Keyword.get(config, :strict)
+      |> Keyword.get(option)
+      |> List.wrap()
+
+    cond do
+      :keep in kind ->
+        [{option, value}|opts]
+      true ->
+        [{option, value}|Keyword.delete(opts, option)]
     end
   end
 

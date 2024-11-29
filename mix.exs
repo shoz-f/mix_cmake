@@ -4,7 +4,7 @@ defmodule MixCmake.MixProject do
   def project do
     [
       app: :mix_cmake,
-      version: "0.1.3",
+      version: "0.1.4",
       elixir: "~> 1.11",
       start_permanent: Mix.env() == :prod,
       description: description(),
@@ -41,5 +41,3 @@ defmodule MixCmake.MixProject do
     ]
   end
 end
-
-                                                                      
