@@ -11,7 +11,9 @@ defmodule MixCmake.MixProject do
       package: package(),
       deps: deps(),
       name: "mix_cmake",
-      source_url: "https://github.com/shoz-f/mix_cmake.git"
+      source_url: "https://github.com/shoz-f/mix_cmake.git",
+
+      docs: docs()
     ]
   end
 
@@ -35,9 +37,20 @@ defmodule MixCmake.MixProject do
 
   defp package() do
     [
-       name: "mix_cmake",
+      name: "mix_cmake",
       licenses: ["Apache-2.0"],
-      links: %{"GitHub" => "https://github.com/shoz-f/mix_cmake.git"}
+      links: %{"GitHub" => "https://github.com/shoz-f/mix_cmake.git"},
+      files: ~w(lib mix.exs README* CHANGELOG* LICENSE*)
+    ]
+  end
+
+  defp docs do
+    [
+      main: "readme",
+      extras: [
+        "README.md",
+        "CHANGELOG.md",
+      ],
     ]
   end
 end
